@@ -48,12 +48,7 @@ hist(outcome [,11])
     HEART_FAILURE_COL <- 17
     PNEUMONIA_COL <- 23
 
-   
-    # the columns 11-23 are "outcome" and we create an outcome index called "column_index"
-    #column_index <- 
-        
-    #    df[,c(HOSPITAL_NAME,STATE,column_index)]
-    
+    # the columns 11-23 are "outcome" and we create an outcome index called "outcome_column"
     outcome_columns <- c("heart attack"=HEART_ATTACK_COL, "heart failure"=HEART_FAILURE_COL, "pneumonia"=PNEUMONIA_COL)
     outcome_column <- outcome_columns[[outcome]]
     data_new <- data[c(HOSPITAL_NAME_COL, STATE_COL, outcome_column)]
@@ -123,6 +118,32 @@ best("NY", "hert attack")
  Error in best("NY", "hert attack") : invalid outcome
  >
      Save your code for this function to a file named best.R.
+
+# Second function
+ 
+ rankhospital <- function(state, outcome, num = "best") {
+     ## Read outcome data
+ }
+ ## Check that state and outcome are valid
+ ## Return hospital name in that state with the given rank 30-day death rate
+ 
+ 
+ }
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
  
  

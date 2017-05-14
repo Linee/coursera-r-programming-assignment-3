@@ -65,6 +65,7 @@ best <- function(state, outcome) {
     
     # select the row with lowerst outcome
     min_row <-which.min(state_filtered$outcome)
+    
     # select the hospital with lowest outcome row
     hospital <- state_filtered[min_row,1]
     return(hospital)

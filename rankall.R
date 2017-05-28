@@ -1,20 +1,10 @@
-# Write a function called rankall that takes two arguments: an outcome name (outcome) and a 
-# hospital rank- ing (num). The function reads the outcome-of-care-measures.csv file and returns 
-#a 2-column data frame containing the hospital in each state that has the ranking specified in num. 
-#For example the function call rankall("heart attack", "best") would return a data frame containing 
-#the names of the hospitals that are the best in their respective states for 30-day heart attack 
-#death rates. The function should return a value for every state (some may be NA). The first column 
-#in the data frame is named hospital, which contains the hospital name, and the second column is named 
-#state, which contains the 2-character abbreviation for the state name. Hospitals that do not have 
-#data on a particular outcome should be excluded from the set of hospitals when deciding the rankings.
-
 
 rankall <- function(outcome, num = "best") {
     ## Read outcome data
     data <- read.csv("outcome-of-care-measures.csv", colClasses="character", na.strings="Not Available",
                      stringsAsFactors=FALSE)
     
-    ## minimise data frame to columns needed
+    ## Create constants based on column position
     HOSPITAL_NAME_COL <- 2
     STATE_COL <- 7
     HEART_ATTACK_COL <- 11
@@ -22,7 +12,10 @@ rankall <- function(outcome, num = "best") {
     PNEUMONIA_COL <- 23
     
     ## Check that state and outcome are valid
-    states <- data[,STATE_COL]
+    states <- unique(data[,STATE_COL])
+    
+    states <- states[order(states)]
+    
     outcomes <- c("heart attack", "heart failure", "pneumonia")
     
     if (!(state %in% states)) {
@@ -32,31 +25,64 @@ rankall <- function(outcome, num = "best") {
         stop(print("invalid outcome"))
     }
     
+    # Pick outcome column based on the outcome passed into the function
+    outcome_columns <- c("heart attack"=HEART_ATTACK_COL, "heart failure"=HEART_FAILURE_COL, "pneumonia"=PNEUMONIA_COL)
+    outcome_column <- outcome_columns[[outcome]]
+    
+    # Create data_new, a collapsed data frame with 3 columns - hospital name, state, outcome
+    data_new <- data[c(HOSPITAL_NAME_COL, STATE_COL, outcome_column)]
+    
+    # Rename the three columns above
+    names(data_new) <- c("hospital", "state_code", "outcome")
+    hospitals <- NULL
     ## For each state, find the hospital of the given rank
-    
-    
-    #if num is greater that the number of hospitals in the desired state,
-    # return NA
-    if (is.numeric(num) == TRUE) {
-        if (length(data[,2]) < num) {
-            return(NA)
-        }
-    }
-    
-    #if nume is either "best" or "worst", then interpret it to the
-    #corresponding numerical value
-    if (is.character(num) == TRUE) {
+    for(state in states) {
+        # Filter data_new and store only data releveant to state in state_filtered data frame
+        state_filtered <- subset(data_new, state_code == state)
+        
+        # make variable numeric 
+        state_filtered$outcome <-as.numeric(state_filtered$outcome)
+        
+        # filter out NAs
+        state_filtered <- state_filtered[!is.na(state_filtered$outcome),]
+        
+        # order/rank outcome
+        ordered_state_filtered <- state_filtered[order(state_filtered$outcome, state_filtered$hospital), ]
+        
         if (num == "best") {
-            num = 1
+            # case - num is "best"
+            hospital <- ordered_state_filtered[1,1]
+        } else if (num == "worst") {
+            hospital <- ordered_state_filtered[nrow(ordered_state_filtered),1]
+        } else {
+            # case - num is a number
+            # select the hospital with ranking 
+            hospital <- ordered_state_filtered[num,1]
         }
-        else if (num == "worst") {
-            num = length(ordered_desired_data[, outcome_column])
-        }
+        
+        # print(hospital)
+        rbind(hospitals, c(hospital, state)) -> hospitals
+
+       
     }
     
-    ## Return a data frame with the hospital names and the state name 
-    
-    
+    names(hospitals) <- c("hospital", "state")
+    ## Return a data frame with the hospital names and the
+    ## (abbreviated) state name
+    return(hospitals)
     
 }
 
+rankall("heart attack", "best")
+head(rankall("heart attack", 20), 10)
+tail(rankall("pneumonia", "worst"), 3)
+tail(rankall("heart failure"), 10)
+
+r <- rankall("heart attack", 4)
+as.character(subset(r, state == "HI")$hospital)
+
+r <- rankall("pneumonia", "worst")
+as.character(subset(r, state == "NJ")$hospital)
+
+r <- rankall("heart failure", 10)
+as.character(subset(r, state == "NV")$hospital)

@@ -1,27 +1,25 @@
-# Second function
 
-rankhospital <- function(state, outcome, num = "best") {
-   #state <- "MD"
-  #outcome <- "heart failure"
-  #num <- 5
-
+rankhospital <- function(state, outcome, num=1) {
+    
     ## Read outcome data
     data <- read.csv("outcome-of-care-measures.csv", colClasses="character", na.strings="Not Available",
                      stringsAsFactors=FALSE)
     
-    ## minimise data frame to columns needed
+    ## Create constants based on column position
     HOSPITAL_NAME_COL <- 2
     STATE_COL <- 7
     HEART_ATTACK_COL <- 11
     HEART_FAILURE_COL <- 17
     PNEUMONIA_COL <- 23
     
-    # the columns 11-23 are "outcome" and we create an outcome index called "outcome_column"
+    # Pick outcome column based on the outcome passed into the function
     outcome_columns <- c("heart attack"=HEART_ATTACK_COL, "heart failure"=HEART_FAILURE_COL, "pneumonia"=PNEUMONIA_COL)
     outcome_column <- outcome_columns[[outcome]]
+    
+    # Create data_new, a collapsed data frame with 3 columns - hospital name, state, outcome
     data_new <- data[c(HOSPITAL_NAME_COL, STATE_COL, outcome_column)]
     
-    # give variables new names
+    # Rename the three columns above
     names(data_new) <- c("hospital", "state_code", "outcome")
     
     ## Check that state and outcome are valid
@@ -35,47 +33,39 @@ rankhospital <- function(state, outcome, num = "best") {
         stop(print("invalid outcome"))
     }
     
-    # in this function, we have four variables: hospital, state_code, outcome and num
-    # we need to create the rank variable called num
-  
-    # but first, filter for state  
+    # Filter data_new and store only data releveant to state in state_filtered data frame
     state_filtered <- subset(data_new, state_code == state)
     
     # make variable numeric 
     state_filtered$outcome <-as.numeric(state_filtered$outcome)
     
+    # filter out NAs
+    state_filtered <- state_filtered[!is.na(state_filtered$outcome),]
     
+    # order/rank outcome
+    ordered_state_filtered <- state_filtered[order(state_filtered$outcome, state_filtered$hospital), ]
     
-    
-    state_filtered$number_column <- rank(state_filtered$outcome, na.last=TRUE,
-                          ties.method="first")
-    state_filtered$rank_column <- number_column[[num]]
-    
- 
-    sorted_state_filtered <- state_filtered[order(state_filtered$rank_column),]
-    
-    # give variables new names
-    names(data_new) <- c("hospital", "state_code", "outcome", "num")
- 
-    # select the row with the outcome defined by "num"
-    row_select <- data_new$num
-
-    # select the hospital with the row defined by num
-    hospital <- data_new[row_select,1]
+    if (num == "best") {
+        # case - num is "best"
+        hospital <- ordered_state_filtered[1,1]
+    } else if (num == "worst") {
+        hospital <- ordered_state_filtered[nrow(ordered_state_filtered),1]
+    } else {
+        # case - num is a number
+        # select the hospital with ranking 
+        hospital <- ordered_state_filtered[num,1]
+    }
     
     return(hospital)
-    
-    # we create a column index called "number" 
-    # The num argument can take values “best”, “worst”, or an integer indicating the ranking 
-    # (smaller numbers are better).
-    
-## Check that state and outcome are valid
-## Return hospital name in that state with the given rank 30-day death rate
-
-
 }
 
-rankhospital("MD", "heart failure", 5)
+#rankhospital("TX", "heart attack", 2)
+#rankhospital("MD", "heart attack", "worst")
+#rankhospital("TX", "heart failure", 4)
+#rankhospital("TX", "heart failure", 4)
+#rankhospital("MD", "heart attack", "worst")
 
-
-
+rankhospital("NC", "heart attack", "worst")
+rankhospital("WA", "heart attack", 7)
+rankhospital("TX", "pneumonia", 10)
+rankhospital("NY", "heart attack", 7)

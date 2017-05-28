@@ -19,31 +19,21 @@ best <- function(state, outcome) {
     data <- read.csv("outcome-of-care-measures.csv", colClasses="character", na.strings="Not Available",
                      stringsAsFactors=FALSE)
     
-    ## minimise data frame to columns needed
+    ## Create constants based on column position
     HOSPITAL_NAME_COL <- 2
     STATE_COL <- 7
     HEART_ATTACK_COL <- 11
     HEART_FAILURE_COL <- 17
     PNEUMONIA_COL <- 23
     
-    
-    # the columns 11-23 are "outcome" and we create an outcome index called "column_index"
-    #column_index <- 
-    
-    #    df[,c(HOSPITAL_NAME,STATE,column_index)]
-    
+    # Pick outcome column based on the outcome passed into the function
     outcome_columns <- c("heart attack"=HEART_ATTACK_COL, "heart failure"=HEART_FAILURE_COL, "pneumonia"=PNEUMONIA_COL)
     outcome_column <- outcome_columns[[outcome]]
+    
+    # Create data_new, a collapsed data frame with 3 columns - hospital name, state, outcome
     data_new <- data[c(HOSPITAL_NAME_COL, STATE_COL, outcome_column)]
     
-    
-    #Hint: if you setup a named vector with something like 
-    # outcomes <- c(“heart attack”=11, “heart failure”=17, “pneumonia”=23) 
-    # then you can use that to both test the function argument and select the column. 
-    # Something like df[, c(2,7,outcomes[outcome])]. Also, when you validate the outcome 
-    # argument instead of using %in% outcomes you’d use %in% names(outcomes). 
-    
-    # give variables new names
+    # Rename the three columns above
     names(data_new) <- c("hospital", "state_code", "outcome")
     
     ## Check that state and outcome are valid
@@ -57,7 +47,7 @@ best <- function(state, outcome) {
         stop(print("invalid outcome"))
     }
     
-    # filter for state 
+    # Filter data_new and store only data releveant to state in state_filtered data frame
     state_filtered <- subset(data_new, state_code == state)
     
     # make variable numeric 
@@ -66,21 +56,28 @@ best <- function(state, outcome) {
     # select the row with lowerst outcome
     min_row <-which.min(state_filtered$outcome)
     
+    # order/rank outcome
+    ordered_state_filtered <- state_filtered[order(state_filtered$outcome, state_filtered$hospital), ]
+    
     # select the hospital with lowest outcome row
-    hospital <- state_filtered[min_row,1]
+    hospital <- ordered_state_filtered[1,1]
     return(hospital)
-    
-    # ties: If there is a tie for the best hospital for a given outcome (meaning there is 
-    # more than one hospital with that rate), 
-    # then the hospital names should be sorted in alphabetical order and the first hospital 
-    # in that set should be chosen (i.e. if hospitals “b”, “c”, and “f” are tied for best, 
-    # then hospital “b” should be returned).
-    
-    if (length(hospital) > 1) {
-        hospitals_ties <- sort(hospital)
-        hospitals_ties[1]
-    }
-    else {
-        hospital
-    }
 }
+
+#best("TX", "heart attack")
+# "CYPRESS FAIRBANKS MEDICAL CENTER"
+#best("TX", "heart failure")
+# "FORT DUNCAN MEDICAL CENTER"
+#best("MD", "heart attack")
+# "JOHNS HOPKINS HOSPITAL, THE"
+#best("MD", "pneumonia")
+# "GREATER BALTIMORE MEDICAL CENTER"
+#best("BB", "heart attack")
+# Error in best("BB", "heart attack") : invalid state
+#best("NY", "hert attack")
+# Error in best("NY", "hert attack") : invalid outcome
+
+
+best("SC", "heart attack")
+best("NY", "pneumonia")
+best("AK", "pneumonia")
